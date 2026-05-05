@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSM-VLM: Long-Short Memory VLM with World-Model for 3D Spatial Reasoning</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/icon.ico" type="image/x-icon">
+
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    :root {
+      --accent: #0077ff;
+      --accent-deep: #0a3d8f;
+      --accent-soft: #e8f2ff;
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #e6ecf5;
+      --panel: #ffffff;
+    }
+
+    body {
+      color: var(--ink);
+      background: #fbfdff;
+    }
+
+    .hero-body {
+      padding: 3rem 1.5rem 1.75rem;
+    }
+
+    .gradient-text {
+      background-image: linear-gradient(120deg, #0053c9 0%, #2c8bed 48%, #7ac7ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      font-weight: 800;
+    }
+
+    .publication-title {
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    .section {
+      padding-top: 2.5rem;
+      padding-bottom: 2.5rem;
+    }
+
+    .figure-frame {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(10, 36, 80, 0.07);
+      padding: 1.1rem;
+    }
+
+    .figure-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .figure-caption {
+      color: #4a4a4a;
+      font-size: 0.95rem;
+      margin-top: 0.6rem;
+    }
+
+    .tag.is-accent {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      margin: 0.18rem;
+      white-space: normal;
+      height: auto;
+      min-height: 2em;
+    }
+
+    .placeholder-tile {
+      border: 1px dashed #b7cce9;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 255, 0.92)),
+        repeating-linear-gradient(45deg, #f7fbff, #f7fbff 10px, #eef5ff 10px, #eef5ff 20px);
+      color: #41516a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 230px;
+      border-radius: 10px;
+      font-weight: 650;
+      padding: 1rem;
+    }
+
+    .hero-visual {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .method-step {
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.25rem;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(10, 36, 80, 0.05);
+    }
+
+    .method-step .icon {
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fff;
+      text-align: center;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--accent-deep);
+      font-size: 1.6rem;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 0.35rem;
+    }
+
+    .mini-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .flow-cell {
+      border: 1px solid #d7e5f7;
+      background: #f7fbff;
+      border-radius: 10px;
+      padding: 0.85rem;
+      min-height: 92px;
+    }
+
+    .flow-cell b {
+      display: block;
+      color: var(--accent-deep);
+      margin-bottom: 0.35rem;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .map-example {
+      image-rendering: auto;
+      background: #05070b;
+      object-fit: contain;
+      max-height: 300px;
+    }
+
+    @media screen and (max-width: 768px) {
+      .publication-title {
+        font-size: 2.05rem !important;
+      }
+
+      .subtitle.is-3 {
+        font-size: 1.3rem;
+      }
+
+      .metric-strip,
+      .mini-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .figure-frame {
+        padding: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-11 has-text-centered">
+          <h1 class="title is-1 publication-title">
+            <span class="gradient-text">LSM-VLM</span>
+          </h1>
+          <h2 class="subtitle is-3" style="margin-top: -0.35rem;">Long-Short Memory VLM with World-Model for 3D Spatial Reasoning</h2>
+          <p class="is-size-5 has-text-weight-semibold" style="margin-bottom: 0.4rem;">Anonymous Authors</p>
+          <p class="is-size-6">A closed-loop spatial VQA framework that connects perception, memory, imagination, and language reasoning.</p>
+          <div style="margin-top: 1.1rem;">
+            <span class="tag is-medium is-accent">Long-short spatial memory</span>
+            <span class="tag is-medium is-accent">Question-conditioned world model</span>
+            <span class="tag is-medium is-accent">Confidence-aware recurrent updates</span>
+          </div>
+          <div class="buttons is-centered" style="margin-top: 1rem;">
+            <a class="button is-dark is-rounded" href="#" aria-disabled="true">
+              <span class="icon"><i class="fas fa-file-alt"></i></span><span>Paper coming soon</span>
+            </a>
+            <a class="button is-rounded" href="#" aria-disabled="true">
+              <span class="icon"><i class="fab fa-github"></i></span><span>Code coming soon</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 1.25rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-visual figure-frame">
+      <img src="./static/images/teaser.png" alt="LSM-VLM teaser showing grounding, trajectory prediction, world-model imagination, memory update, and answering">
+      <p class="figure-caption has-text-centered">
+        Given an egocentric video and a question, LSM-VLM grounds the scene, plans question-relevant exploration, imagines missing observations, updates graph and BEV memories, and answers from enriched spatial evidence.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-two-thirds">
+        <h2 class="title is-3 has-text-centered">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Recent vision-language models show strong perceptual and logical abilities, but still struggle with 3D spatial question answering when evidence is distributed across long trajectories or hidden behind unvisited viewpoints.
+            <strong>LSM-VLM</strong> addresses this by using structured cognitive memory as the interface between perception, imagination, and reasoning.
+            From an input video, it builds a dual memory: a scene graph for object-centric long-term semantics and a local BEV map for short-term geometric grounding.
+            Conditioned on the question and current memory, the model predicts informative target viewpoints, queries a world model to imagine missing observations, converts the imagined rollout into candidate graph and BEV updates, and selectively consolidates them through confidence-aware recurrent memory updates.
+            This design improves long-horizon and cross-view spatial reasoning on VSI-Bench and SQA3D.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-vcentered">
+      <div class="column is-7">
+        <div class="figure-frame">
+          <img src="./static/images/pipeline.png" alt="LSM-VLM pipeline diagram">
+          <p class="figure-caption">
+            LSM-VLM alternates between a world-model flow for collecting missing spatial evidence and a VLM answer flow for reading updated memory and deciding whether to answer.
+          </p>
+        </div>
+      </div>
+      <div class="column is-5">
+        <h3 class="title is-3">Overview</h3>
+        <div class="content">
+          <p>
+            The updated paper frames the system as two alternating closed loops: a <strong>World Model Flow</strong> that plans, imagines, detects, and updates memory, and a <strong>VLM Answer Flow</strong> that reads original observations, imagined evidence, and dual memory to produce the final answer.
+          </p>
+        </div>
+        <div class="mini-flow">
+          <div class="flow-cell"><b>Ground</b>VGGT and SAM3 initialize graph and BEV memory.</div>
+          <div class="flow-cell"><b>Plan</b>The VLM predicts target poses and an action list.</div>
+          <div class="flow-cell"><b>Imagine</b>Stable Virtual Camera synthesizes a rollout.</div>
+          <div class="flow-cell"><b>Update</b>Gated memory fusion prepares evidence for answering.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Method Components</h3>
+    <div class="columns">
+      <div class="column">
+        <div class="method-step">
+          <span class="icon is-large"><i class="fas fa-project-diagram fa-2x"></i></span>
+          <h4 class="title is-5">Long-Term Scene Graph</h4>
+          <p>Object nodes store category, 2D world-frame center, oriented extent, confidence, and NYU40 semantic encoding; graph edges store 3DSSG-style spatial relations.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="method-step">
+          <span class="icon is-large"><i class="fas fa-map fa-2x"></i></span>
+          <h4 class="title is-5">Short-Term BEV Map</h4>
+          <p>A local agent-centered grid keeps occupancy and semantic channels, preserving direction-sensitive geometry while avoiding global BEV redundancy.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="method-step">
+          <span class="icon is-large"><i class="fas fa-sync-alt fa-2x"></i></span>
+          <h4 class="title is-5">Recurrent Memory Update</h4>
+          <p>BEV memory forgets low-confidence cells and injects transformed candidate updates; graph updates are committed only after verification against consolidated BEV evidence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-vcentered">
+      <div class="column is-5">
+        <h3 class="title is-4">Demo Trace</h3>
+        <div class="content">
+          <p>
+            The expected browser demo now follows the LSM-VLM loop: initialize memory from the observed trajectory, ask the VLM for a question-relevant target pose, imagine a short rollout, extract candidate updates, and either answer or repeat.
+          </p>
+          <ul>
+            <li>Input: egocentric video, current observation, and spatial question.</li>
+            <li>Intermediate: target pose list, action plan, imagined rollout, delta graph, delta BEV, confidence scores.</li>
+            <li>Output: final answer grounded in original observations and updated dual memory.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="column">
+        <div class="figure-frame">
+          <div class="placeholder-tile">
+            LSM-VLM inference video placeholder<br>
+            Add a rollout showing target-pose planning, world-model imagination, and gated memory update.
+          </div>
+          <p class="figure-caption">Placeholder retained because no polished end-to-end demo video is present in the local assets.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-vcentered">
+      <div class="column is-7">
+        <div class="image-grid">
+          <div class="figure-frame">
+            <img class="map-example" src="./static/images/bev-example.png" alt="Example local BEV occupancy map">
+            <p class="figure-caption">Example local BEV occupancy output from the spatial-memory build pipeline.</p>
+          </div>
+          <div class="figure-frame">
+            <img src="./static/images/sample-view.jpg" alt="Sample egocentric indoor observation">
+            <p class="figure-caption">Sample egocentric visual observation.</p>
+          </div>
+        </div>
+      </div>
+      <div class="column is-5">
+        <h3 class="title is-4">Structured Spatial Evidence</h3>
+        <div class="content">
+          <p>
+            The new version makes the memory definitions more concrete. The BEV map is a two-channel local grid for occupancy and NYU40 semantic labels, while the scene graph is a structured JSON memory with object nodes, agent state, and spatial relations.
+          </p>
+          <p>
+            VGGT and SAM3 are used for perceptual grounding and for parsing imagined rollouts, keeping the real and imagined observations aligned through the same perception module.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Training Recipe</h3>
+    <div class="columns is-vcentered">
+      <div class="column is-5">
+        <div class="content">
+          <ul>
+            <li><strong>Backbone:</strong> Qwen3-VL-8B-Instruct, with Qwen3-VL 4B and 8B variants used in training ablations.</li>
+            <li><strong>World model:</strong> Stable Virtual Camera generates target-pose rollouts.</li>
+            <li><strong>Stage 1:</strong> train map and graph encoders plus projectors while freezing the original VLM modules.</li>
+            <li><strong>Stage 2:</strong> continue task adaptation with LoRA while keeping graph and map pathways trainable.</li>
+            <li><strong>Data:</strong> indoor embodied-scene training splits with two-stage spatial-memory adaptation.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="column">
+        <div class="figure-frame">
+          <img src="./static/images/ablation-vsi-radar.png" alt="Ablation radar chart for LSM-VLM components">
+          <p class="figure-caption">Component ablation visualization: full LSM-VLM benefits most when BEV, graph, world model, and memory update work together.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Spatial Reasoning Results</h3>
+    <div class="metric-strip">
+      <div class="metric"><strong>69.2</strong><span>VSI-Bench average accuracy</span></div>
+      <div class="metric"><strong>63.6</strong><span>SQA3D Avg. EM-1</span></div>
+      <div class="metric"><strong>+11.3</strong><span>over Qwen3-VL-8B on VSI-Bench</span></div>
+      <div class="metric"><strong>67.0s</strong><span>average inference time per sample</span></div>
+    </div>
+    <div class="columns is-vcentered" style="margin-top: 1.25rem;">
+      <div class="column is-5">
+        <div class="figure-frame">
+          <img src="./static/images/main-results-radar-gap.png" alt="Radar chart comparing LSM-VLM with best non-ours baseline">
+          <p class="figure-caption">Best-gap radar: LSM-VLM is strongest on route planning and appearance order, and remains competitive across object and relation tasks.</p>
+        </div>
+      </div>
+      <div class="column is-7">
+        <div class="figure-frame">
+          <img src="./static/images/main-results-gap-heatmap.png" alt="Per-task accuracy gap heatmap for LSM-VLM">
+          <p class="figure-caption">Per-task gap heatmap against representative baselines. The largest gains appear on long-horizon relative direction and route planning tasks.</p>
+        </div>
+      </div>
+    </div>
+    <div class="figure-frame" style="margin-top: 1.25rem;">
+      <img src="./static/images/main-results-dumbbell.png" alt="Main result dumbbell plot for LSM-VLM">
+      <p class="figure-caption">Main result visualization from the updated paper assets.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Ablation Takeaways</h3>
+    <div class="columns is-centered">
+      <div class="column is-two-thirds">
+        <div class="content">
+          <ul>
+            <li>Adding only BEV or only graph gives little gain; the dual memory is useful because geometric and semantic memories complement each other.</li>
+            <li>World-model imagination alone helps modestly, but its gain becomes much larger when imagined views are converted into structured memory updates.</li>
+            <li>Recursive memory update raises VSI-Bench from 67.1 to 69.2 and especially improves relative distance, relative direction, and route planning.</li>
+            <li>The best asynchronous memory configuration updates BEV every round and graph every four rounds, matching their short-term and long-term roles.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Efficiency</h3>
+    <div class="columns is-centered">
+      <div class="column is-two-thirds">
+        <div class="content has-text-justified">
+          <p>
+            The updated paper reports an average inference time of about 67.0 seconds per sample. VLM calls contribute 19.68 seconds in total, the world model contributes 13.80 seconds, VGGT and SAM3 each contribute 15.26 seconds across dense frame calls, and memory update itself remains lightweight at 2.97 seconds.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">Limitations</h3>
+    <div class="columns is-centered">
+      <div class="column is-two-thirds">
+        <div class="content has-text-justified">
+          <p>
+            Current experiments focus on Qwen3-VL 4B and 8B backbones. Future work should evaluate transfer to broader VLM families, parallelize VLM and world-model execution to reduce latency, and condition the world model directly on structured memory to improve the consistency and task relevance of imagined views.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h3 class="title is-3 has-text-centered">BibTeX</h3>
+    <pre class="figure-frame" style="white-space: pre-wrap; font-size: 0.9rem;"><code>@article{lsmvlm2026spatial,
+  title   = {LSM-VLM: Long-Short Memory VLM with World-Model for 3D Spatial Reasoning},
+  author  = {Anonymous Authors},
+  journal = {Manuscript},
+  year    = {2026}
+}</code></pre>
+  </div>
+</section>
+
+</body>
+</html>
